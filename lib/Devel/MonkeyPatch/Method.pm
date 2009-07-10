@@ -9,14 +9,6 @@ package Devel::MonkeyPatch::Method;
 # * wrapping existing non-method sub
 # * creating new method
 # * creating new non-method sub
-#FIXME documentation
-# * describe what monkey-patching is
-# * describe the goals (ie. not having more code "no strict 'refs'", "no warnings 'redefine'" than necessary
-# * mention Aspect and when this module is better than that (ie. it can catch exception thrown by the original method, and it can have dynamically scoped vars in effect during the call to the orig method)
-# * example
-# * warnings about overuse
-# * warnings about alpha quality code
-# * warnings about performance penalty (more function calls)
 
 use strict;
 use warnings;
@@ -45,9 +37,9 @@ This is ALPHA SOFTWARE. Use at your own risk. Features may change.
 
 Monkey-patching (or guerilla-patching or duck-punching or whatever you call it)
 is the process of changing the code at runtime. The most prominent example is
-to replace or wrap methods of a class.
+replacing or wrapping methods of a class.
 
-The usual idom of using monkey-patching to wrap a method:
+The usual idom to wrap a method 'in place':
 
   use Sub::Name;
 
@@ -74,14 +66,41 @@ Now, there are two problems with that:
 
 =item
 
-It contains a lot of duplication (see, C<Foo::Bar::some_sub> is written 3
+It contains a lot of duplication (look, C<Foo::Bar::some_sub> is written 3
 times) and the whole construct is a heavy boilerplate.
 
 =item
 
-If by accident you forget switching back on the strictures and warnings, more
+If by accident you forget to switch back on the strictures and warnings, more
 code is compiled and run under C<no strict 'refs'> (and C<no warnings
 'redefine'>) than should be.
+
+=back
+
+This module tries to provide a more convenient and expressive interface for
+wrapping methods 'in place'.
+
+=head2 Differences from Aspect
+
+The L<Aspect> module gives you a full-fledged AOP API where you can easily wrap
+even dozens of subroutines in one call, with clear and nice syntax. It is much
+more powerful and flexible when selecting what to wrap. Its model to run code
+before or after the original method and modify values is more elegant. It even
+tweaks L<CORE/caller> to make things look better. Still, it has two
+disadvantages over L<Devel::MonkeyPatch::Method>:
+
+=over
+
+=item
+
+With L<Aspect> you can run any code before or after the original method, but if
+the original method throws an exception, you cannot catch it.
+
+=item
+
+With L<Aspect> the L<Aspect/before> and L<Aspect/after> advices are in separate
+scopes than the call to the original method, so you cannot localize variables
+during the call to the original variable.
 
 =back
 
@@ -106,12 +125,13 @@ use Symbol;
   our $sub;
 
 =head2 next::method(LIST)
+
 =head2 next::sub(LIST)
 
 Calls the original method (ie. that was in effect before the monkey-patching)
-with LIST as parameters. Returns back the value returned by that method.
+with LIST as parameters. Returns the value returned by that method.
 
-Should be called only from inside the function that is installed by
+Should only be called from inside the subroutine that is installed by
 monkey-patching.
 
 =cut
@@ -132,10 +152,10 @@ Monkey-patches the given sub: replaces it with CODE.
 
 The first parameter (NAME, GLOB) that identifies the sub to be replaced can
 be a typeglob, a bareword or a string. If it is an unqualified name, it is
-qualified it with the package name of the caller of L<monkeypatch>.
+qualified it with the package name of the caller of L</monkeypatch>.
 
 First it assigns a name (that is the same as the fully-qualified name of the
-sub you're patching) to the sub using L<Sub::Name::subname>, then replaces the
+sub you're patching) to the sub using L<Sub::Name/subname>, then replaces the
 symbol table code entry with CODE.
 
 =cut
@@ -166,6 +186,10 @@ sub monkeypatch(*&)
   return $old_sub;
 }
 
+1;
+
+__END__
+
 =head1 EXAMPLES
 
   # add a new sub
@@ -189,6 +213,7 @@ sub monkeypatch(*&)
     original::sub(@_);
   };
 
+
   # wrap a method by name
   monkeypatch 'Foo::Bar::some_sub' => sub {
     ...
@@ -199,16 +224,18 @@ sub monkeypatch(*&)
     ...
   };
 
-  # wrap a method by name (typeglob)
+  # wrap a method by typeglob
   monkeypatch *Foo::Bar::some_sub => sub {
     ...
   };
 
-  # wrap a method just for the current scope
+
+  # wrap a method with dynamic scope
   local *Foo::Bar::some_sub = \&Foo::Bar::some_sub;
   monkeypatch *Foo::Bar::some_sub => sub {
     ...
   };
+
 
   # wrap a method in a context-preserving way (ie. it will work with
   # context-sensitive methods)
@@ -229,8 +256,26 @@ sub monkeypatch(*&)
 
 =head2 Performance
 
+The current implementation uses 2 extra function calls compared to the
+hand-coded version outlined in L</DESCRIPTION> (which in turn uses 1 extra
+function call compared to the unwrapped function). You may or may not care
+about that (anyways, probably you're not using this module in production code).
+
+Not measured the actual effect of it yet.
 
 =head2 Monkey-patching is next to evil
+
+Monkey-patching can save the day (and did it several times), but is a dangerous
+device. Extensively replacing/wrapping methods without serious reasons is not
+considered to be a good practice. Try to avoid the temptation, and do not do it
+unless you really have to. See eg.
+L<http://en.wikipedia.org/wiki/Monkey_patching#Pitfalls>.
+
+=head2 Use Aspect for AOP
+
+If you want to do some real Aspect Oriented Programming (AOP) instead of just
+wrapping some random method, you're better off with using the L<Aspect> module.
+See also L</Differences from Aspect>.
 
 =head1 SEE ALSO
 
@@ -254,5 +299,3 @@ This program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
 =cut
-
-1;
