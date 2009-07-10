@@ -5,8 +5,8 @@ use warnings;
 
 use inc::Module::Install;
 
-name 'Devel-MonkeyPatch';
-all_from 'lib/Devel/MonkeyPatch.pm';
+name 'Devel-MonkeyPatch-Method';
+all_from 'lib/Devel/MonkeyPatch/Method.pm';
 
 requires 'Exporter' => 0;
 requires 'Sub::Name' => 0;

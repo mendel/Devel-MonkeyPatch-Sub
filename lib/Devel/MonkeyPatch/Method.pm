@@ -1,6 +1,5 @@
-package Devel::MonkeyPatch;
+package Devel::MonkeyPatch::Method;
 
-#FIXME rename to Devel::MonkeyPatch::Method
 #FIXME tests
 # * stacktrace (subnames)
 # * nesting
@@ -26,7 +25,7 @@ use 5.005;
 
 =head1 NAME
 
-Devel::MonkeyPatch - Does the dirty work of monkey-patching subs for you.
+Devel::MonkeyPatch::Method - Does the dirty work of monkey-patching subs for you.
 
 =head1 SYNOPSIS
 
@@ -240,8 +239,8 @@ L<Sub::Name>, L<Aspect>, L<Context::Preserve>
 =head1 SUPPORT
 
 Please submit bugs to the CPAN RT system at
-http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Devel%3A%3AMonkeyPatch or via
-email at bug-devel-monkeypatch@rt.cpan.org.
+http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Devel%3A%3AMonkeyPatch%3A%3AMethod
+or via email at bug-devel-monkeypatch-method@rt.cpan.org.
 
 =head1 AUTHOR
 
