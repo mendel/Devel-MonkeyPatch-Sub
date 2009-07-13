@@ -215,7 +215,9 @@ unqualified name, it is qualified with the package name of the caller of
 L</replace_sub>.
 
 All the subroutines installed will have the fully qualified name of the
-subroutine they're replacing assigned to via L<Sub::Name/subname>.
+subroutine they're replacing assigned to via L<Sub::Name/subname>. The
+prototype of the new subroutine is set to that of the original subroutine (if
+it had any prototype).
 
 Returns: reference to the new sub (ie. what GLOB|NAME will refer to after the
 patching)
@@ -265,7 +267,9 @@ unqualified name, it is qualified with the package name of the caller of
 L</replace_sub>.
 
 All the subroutines installed will have the fully qualified name of the
-subroutine they're replacing assigned to via L<Sub::Name/subname>.
+subroutine they're replacing assigned to via L<Sub::Name/subname>. The
+prototype of the new subroutine is set to that of the original subroutine (if
+it had any prototype).
 
 Returns: reference to the new sub (ie. what GLOB|NAME will refer to after the
 patching)
@@ -399,6 +403,13 @@ Unlike L<Hook::LexWrap> or L<Aspect>, L<Devel::MonkeyPatch::Sub> does not (yet)
 override C<caller>. The problem is that some subroutines expect that they are
 called by the actual user code, and then they will behave less usefully if
 there's a wrapper inbetween.
+
+=head2 subname() and set_prototype() is called even on named subs
+
+Currently L<Sub::Name/subname> is called on CODE even if CODE is a reference to
+a named subroutine, which is clearly the wrong behaviour (it should skip the
+L<Sub::Name/subname> call in that case). The same goes for the
+L<Sub::Prototype/set_prototype> call.
 
 =head1 SEE ALSO
 
