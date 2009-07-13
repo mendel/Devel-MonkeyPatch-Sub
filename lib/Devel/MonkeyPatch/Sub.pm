@@ -11,6 +11,7 @@ package Devel::MonkeyPatch::Sub;
 # * monkey-patching localized subs
 # * nesting
 # * stacktrace (subnames)
+# * prototypes
 
 use strict;
 use warnings;
@@ -143,6 +144,7 @@ our $VERSION = 0.01;
 use base qw(Exporter);
 our @EXPORT_OK = qw(replace_sub wrap_sub);
 
+use Sub::Prototype;
 use Sub::Name;
 use Symbol;
 
@@ -235,7 +237,14 @@ sub replace_sub(*&)
     no strict 'refs';
     no warnings 'redefine';
 
-    return *$glob = subname $sub_name => $new_sub;
+    my $old_sub = *$glob{CODE};
+    my $wrapper_sub = subname $sub_name => $new_sub;
+
+    if (defined (my $prototype = prototype($old_sub))) {
+      set_prototype $new_sub => $prototype;
+    }
+
+    return *$glob = $wrapper_sub;
   }
 }
 
@@ -279,10 +288,16 @@ sub wrap_sub(*&)
     no warnings 'redefine';
 
     my $old_sub = *$glob{CODE};
-    return *$glob = subname $sub_name => sub {
+    my $wrapper_sub = subname $sub_name => sub {
       local $original::sub = $old_sub;
       return $new_sub->(@_);
     };
+
+    if (defined (my $prototype = prototype($old_sub))) {
+      set_prototype $wrapper_sub => $prototype;
+    }
+
+    return *$glob = $wrapper_sub;
   }
 }
 
@@ -377,11 +392,6 @@ L<http://en.wikipedia.org/wiki/Monkey_patching#Pitfalls>.
 If you want to do some real Aspect Oriented Programming (AOP) instead of just
 wrapping/replacing/adding some random method, you're better off with using the
 L<Aspect> module. See also L</Differences from Aspect>.
-
-=head2 Prototype of wrapped subs is lost
-
-Currently no care is taken to preserve the prototype of the wrapped subroutine.
-This is not a problem for subroutines called as methods.
 
 =head2 caller() shows your wrapper
 

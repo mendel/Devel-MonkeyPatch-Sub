@@ -9,8 +9,9 @@ name 'Devel-MonkeyPatch-Method';
 all_from 'lib/Devel/MonkeyPatch/Method.pm';
 
 requires 'Exporter' => 0;
-requires 'Sub::Name' => 0;
 requires 'Symbol' => 0;
+requires 'Sub::Name' => 0;
+requires 'Sub::Prototype' => 0;
 
 auto_install;
 
