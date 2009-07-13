@@ -1,10 +1,5 @@
 package Devel::MonkeyPatch::Sub;
 
-#FIXME propely document add_sub
-# * document exported methods
-# * mention that Aspect cannot do that ATM
-# * mention that it has the same overhead as the hand-coded version
-# * clean up documentation of add_sub and wrap_sub
 #FIXME tests
 # * stacktrace (subnames)
 # * nesting
@@ -26,12 +21,20 @@ Devel::MonkeyPatch::Sub - Does the dirty work of monkey-patching subs for you.
 
 =head1 SYNOPSIS
 
+  # wrap a method
   wrap_sub Foo::Bar::some_sub => sub {
     my $self = shift;
 
     # do something
 
     return $self->original::method(@_);
+  };
+
+  # install a new method
+  replace_sub Foo::Bar::some_sub => sub {
+    my $self = shift;
+
+    # do something
   };
 
 =head1 DISCLAIMER
@@ -43,6 +46,8 @@ This is ALPHA SOFTWARE. Use at your own risk. Features may change.
 Monkey-patching (or guerilla-patching or duck-punching or whatever you call it)
 is the process of changing the code at runtime. The most prominent example is
 replacing or wrapping methods of a class.
+
+=head2 Hand-coded monkey-patching
 
 The usual idom to wrap a method 'in place':
 
@@ -83,15 +88,15 @@ code is compiled and run under C<no strict 'refs'> (and C<no warnings
 =back
 
 This module tries to provide a more convenient and expressive interface for
-wrapping methods 'in place'.
+wrapping (or simply adding/replacing) methods 'in place'.
 
-=head2 Differences from Aspect
+=head2 Differences from Aspect and Hook::LexWrap
 
 The L<Aspect> module gives you a full-fledged AOP API where you can easily wrap
 even dozens of subroutines in one call, with clear and nice syntax. It is much
 more powerful and flexible when selecting what to wrap. Its model to run code
 before or after the original method and modify values is more elegant. It even
-tweaks L<CORE/caller> to make things look better. Still, it has two
+tweaks L<CORE/caller> to make things look better. Still, it has these
 disadvantages over L<Devel::MonkeyPatch::Sub>:
 
 =over
@@ -99,15 +104,33 @@ disadvantages over L<Devel::MonkeyPatch::Sub>:
 =item
 
 With L<Aspect> you can run any code before or after the original method, but if
-the original method throws an exception, you cannot catch it.
+the original method throws an exception, you cannot currently catch it.
 
 =item
 
 With L<Aspect> the L<Aspect/before> and L<Aspect/after> advices are in separate
 scopes than the call to the original method, so you cannot localize variables
-during the call to the original variable.
+for the duration of the call to the original subroutine.
+
+=item
+
+With L<Aspect> you cannot currently add a new method to a class.
 
 =back
+
+L<Devel::MonkeyPatch::Sub> is also more lightweight than L<Aspect>.
+
+Using L<Hook::LexWrap> (which L<Aspect> is based on) shares the above
+disadvantages with L<Aspect>.
+
+=head1 EXPORTS
+
+No methods are exported by default. You can import L<replace_sub> and
+L</wrap_sub> if you want to.
+
+L</original::method> and L<original::sub> are unconditionally created in the
+L<original> package (not an original idea to use that namespace for anything
+sensible, so I hope it won't clash with your code).
 
 =head1 METHODS
 
@@ -116,7 +139,7 @@ during the call to the original variable.
 our $VERSION = 0.01;
 
 use base qw(Exporter);
-our @EXPORT_OK = qw(add_sub wrap_sub);
+our @EXPORT_OK = qw(replace_sub wrap_sub);
 
 use Sub::Name;
 use Symbol;
@@ -129,15 +152,13 @@ use Symbol;
 
   our $sub;
 
-=head2 next::method(LIST)
-
-=head2 next::sub(LIST)
+=head2 original::method(LIST)
 
 Calls the original method (ie. that was in effect before the monkey-patching)
 with LIST as parameters. Returns the value returned by that method.
 
 Should only be called from inside the subroutine that is installed by
-monkey-patching.
+L</wrap_sub> (otherwise the behaviour is undefined).
 
 =cut
 
@@ -146,68 +167,102 @@ monkey-patching.
     goto $sub if $sub;
   }
 
-  no warnings 'once';
-  *sub = \&method;
-}
 
-=head2 add_sub(NAME, CODE)
-=head2 add_sub(GLOB, CODE)
+=head2 original::sub(LIST)
 
-Installs CODE as a new sub with the name specified by the first parameter (NAME
-or GLOB).
-
-The first parameter (NAME, GLOB) that identifies the sub to be replaced can
-be a typeglob, a bareword or a string. If it is an unqualified name, it is
-qualified it with the package name of the caller of L</wrap_sub>.
-
-First it assigns a name (that is the same as the fully-qualified name of the
-sub you're patching) to the sub using L<Sub::Name/subname>, then replaces the
-symbol table code entry with CODE.
-
-Returns: reference to the new sub
-
-Note: you cannot call C<< $self->original::method(@_) >> from subroutines
-created via L</add_sub>.
-
-Note: You can also add subs with L<wrap_sub>, but subs added that way will run
-slower (they will have one more function call overhead).
+The same as L</original::method>.
 
 =cut
 
-sub add_sub(*&)
-{
-  my ($glob, $new_sub) = @_;
+  {
+    no warnings 'once';
+    *sub = \&method;
+  }
+}
 
-  my $caller_pkg = (caller(0))[0];
+#
+# _subname(GLOB)
+#
+# Returns the fully-qualified name of the symbol referenced by GLOB.
+#
+# If it is an unqualified name, it is qualified it with the package name of the
+# second caller of L</_subname>.
+#
+sub _subname(*)
+{
+  my ($glob) = @_;
+
+  my $caller_pkg = (caller(1))[0];
 
   my $sub_name = Symbol::qualify(ref $glob ? *$glob : $glob, $caller_pkg);
   $sub_name =~ s/^\*//;
+
+  return $sub_name;
+}
+
+
+=head2 replace_sub(NAME|GLOB, CODE)
+
+Replaces the subroutine identified by NAME|GLOB with CODE (if a sub with that
+name alreay existed), or installs CODE as a new sub with the given name (if no
+such sub existed before).
+
+The first parameter (NAME or GLOB) that identifies the sub to be
+replaced/created can be a typeglob, a bareword or a string. If it is an
+unqualified name, it is qualified with the package name of the caller of
+L</replace_sub>.
+
+All the subroutines installed will have the fully qualified name of the
+subroutine they're replacing assigned to via L<Sub::Name/subname>.
+
+Returns: reference to the new sub (ie. what GLOB|NAME will refer to after the
+patching)
+
+Note: you cannot not call C<< $self->original::method(@_) >> from subroutines
+installed via L</replace_sub>. (The behaviour of L</original::method> is
+undefined in subroutines created via L</replace_sub>.) If you need
+L</original::method>, use L</wrap_sub> instead.
+
+=cut
+
+sub replace_sub(*&)
+{
+  my ($glob, $new_sub) = @_;
+
+  my $sub_name = _subname($glob);
 
   {
     no strict 'refs';
     no warnings 'redefine';
 
-    *$glob = subname $sub_name => $new_sub;
+    return *$glob = subname $sub_name => $new_sub;
   }
-
-  return $new_sub;
 }
 
 
-=head2 wrap_sub(NAME, CODE)
-=head2 wrap_sub(GLOB, CODE)
+=head2 wrap_sub(NAME|GLOB, CODE)
 
-Wraps the given sub: replaces it with CODE.
+Replaces the subroutine identified by NAME|GLOB with CODE (if a sub with that
+name alreay existed), or installs CODE as a new sub with the given name (if no
+such sub existed before).
 
-The first parameter (NAME, GLOB) that identifies the sub to be replaced can
-be a typeglob, a bareword or a string. If it is an unqualified name, it is
-qualified it with the package name of the caller of L</wrap_sub>.
+You can call the original sub from CODE via the C<< $self->original::method(@_)
+>> syntax (see L</original::method>). If the sub did not exist before wrapping
+it, C<< $self->original::method(@_) >> will be simply a no-op.
 
-First it assigns a name (that is the same as the fully-qualified name of the
-sub you're patching) to the sub using L<Sub::Name/subname>, then replaces the
-symbol table code entry with CODE.
+The first parameter (NAME or GLOB) that identifies the sub to be
+replaced/created can be a typeglob, a bareword or a string. If it is an
+unqualified name, it is qualified with the package name of the caller of
+L</replace_sub>.
 
-Returns: reference to the new sub
+All the subroutines installed will have the fully qualified name of the
+subroutine they're replacing assigned to via L<Sub::Name/subname>.
+
+Returns: reference to the new sub (ie. what GLOB|NAME will refer to after the
+patching)
+
+Note: If you do not intend to call C<< $self->original::method(@_) >> from CODE,
+you should use the faster L</replace_sub> instead.
 
 =cut
 
@@ -215,10 +270,7 @@ sub wrap_sub(*&)
 {
   my ($glob, $new_sub) = @_;
 
-  my $caller_pkg = (caller(0))[0];
-
-  my $sub_name = Symbol::qualify(ref $glob ? *$glob : $glob, $caller_pkg);
-  $sub_name =~ s/^\*//;
+  my $sub_name = _subname($glob);
 
   subname $sub_name => $new_sub;
 
@@ -227,13 +279,11 @@ sub wrap_sub(*&)
     no warnings 'redefine';
 
     my $old_sub = *$glob{CODE};
-    *$glob = subname $sub_name => sub {
+    return *$glob = subname $sub_name => sub {
       local $original::sub = $old_sub;
       return $new_sub->(@_);
     };
   }
-
-  return $new_sub;
 }
 
 1;
@@ -242,8 +292,8 @@ __END__
 
 =head1 EXAMPLES
 
-  # add a new sub
-  add_sub Foo::Bar::some_sub => sub {
+  # create or replace a new sub
+  replace_sub Foo::Bar::some_sub => sub {
     print "hello\n";
   };
 
@@ -306,30 +356,36 @@ __END__
 
 =head2 Performance
 
-The current implementation uses 2 extra function calls compared to the
-hand-coded version outlined in L</DESCRIPTION> (which in turn uses 1 extra
-function call compared to the unwrapped function). You may or may not care
-about that (anyways, probably you're not using this module in production code).
+The current implementation of L</wrap_sub> uses 2 extra function calls compared
+to the hand-coded version outlined in L</DESCRIPTION> (which in turn uses 1
+extra function call compared to the unwrapped function). You may or may not
+care about that. Not measured the actual effect of it yet.
 
-Not measured the actual effect of it yet.
+L</replace_sub> is exempt of this defect, it has no runtime penalty compared to
+the hand-coded version.
 
 =head2 Monkey-patching is next to evil
 
 Monkey-patching can save the day (and did it several times), but is a dangerous
-device. Extensively replacing/wrapping methods without serious reasons is not
-considered to be a good practice. Try to avoid the temptation, and do not do it
-unless you really have to. See eg.
+device. Extensively replacing/wrapping others' methods without serious reasons
+is not considered to be a good practice. Try to stand the temptation, and do
+not do it unless you really have to. See eg.
 L<http://en.wikipedia.org/wiki/Monkey_patching#Pitfalls>.
 
 =head2 Use Aspect for AOP
 
 If you want to do some real Aspect Oriented Programming (AOP) instead of just
-wrapping some random method, you're better off with using the L<Aspect> module.
-See also L</Differences from Aspect>.
+wrapping/replacing/adding some random method, you're better off with using the
+L<Aspect> module. See also L</Differences from Aspect>.
+
+=head2 Prototype of wrapped subs is lost
+
+Currently no care is taken to preserve the prototype of the wrapped subroutine.
+This is not a problem for subroutines called as methods.
 
 =head1 SEE ALSO
 
-L<Sub::Name>, L<Aspect>, L<Context::Preserve>
+L<Sub::Name>, L<Aspect>, L<Hook::LexWrap>, L<Context::Preserve>
 
 =head1 SUPPORT
 
