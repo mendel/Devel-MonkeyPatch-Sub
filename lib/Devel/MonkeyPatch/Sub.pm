@@ -1,5 +1,9 @@
 package Devel::MonkeyPatch::Sub;
 
+#FIXME propely document add_sub
+# * mention that Aspect cannot do that ATM
+# * mention that it has the same overhead as the hand-coded version
+# * clean up documentation of add_sub and wrap_sub
 #FIXME tests
 # * stacktrace (subnames)
 # * nesting
@@ -21,7 +25,7 @@ Devel::MonkeyPatch::Sub - Does the dirty work of monkey-patching subs for you.
 
 =head1 SYNOPSIS
 
-  monkeypatch Foo::Bar::some_sub => sub {
+  wrap_sub Foo::Bar::some_sub => sub {
     my $self = shift;
 
     # do something
@@ -111,7 +115,7 @@ during the call to the original variable.
 our $VERSION = 0.01;
 
 use base qw(Exporter);
-our @EXPORT = qw(monkeypatch);
+our @EXPORT_OK = qw(add_sub wrap_sub);
 
 use Sub::Name;
 use Symbol;
@@ -145,28 +149,71 @@ monkey-patching.
   *sub = \&method;
 }
 
-=head2 monkeypatch(NAME, CODE)
-=head2 monkeypatch(GLOB, CODE)
+=head2 add_sub(NAME, CODE)
+=head2 add_sub(GLOB, CODE)
 
-Monkey-patches the given sub: replaces it with CODE.
+Installs CODE as a new sub with the name specified by the first parameter (NAME
+or GLOB).
 
 The first parameter (NAME, GLOB) that identifies the sub to be replaced can
 be a typeglob, a bareword or a string. If it is an unqualified name, it is
-qualified it with the package name of the caller of L</monkeypatch>.
+qualified it with the package name of the caller of L</wrap_sub>.
 
 First it assigns a name (that is the same as the fully-qualified name of the
 sub you're patching) to the sub using L<Sub::Name/subname>, then replaces the
 symbol table code entry with CODE.
 
+Returns: reference to the new sub
+
+Note: you cannot call C<< $self->original::method(@_) >> from subroutines
+created via L</add_sub>.
+
+Note: You can also add subs with L<wrap_sub>, but subs added that way will run
+slower (they will have one more function call overhead).
+
 =cut
 
-sub monkeypatch(*&)
+sub add_sub(*&)
 {
   my ($glob, $new_sub) = @_;
 
-  no strict 'refs';
+  my $caller_pkg = (caller(0))[0];
 
-  my $old_sub = *$glob{CODE};
+  my $sub_name = Symbol::qualify(ref $glob ? *$glob : $glob, $caller_pkg);
+  $sub_name =~ s/^\*//;
+
+  {
+    no strict 'refs';
+    no warnings 'redefine';
+
+    *$glob = subname $sub_name => $new_sub;
+  }
+
+  return $new_sub;
+}
+
+
+=head2 wrap_sub(NAME, CODE)
+=head2 wrap_sub(GLOB, CODE)
+
+Wraps the given sub: replaces it with CODE.
+
+The first parameter (NAME, GLOB) that identifies the sub to be replaced can
+be a typeglob, a bareword or a string. If it is an unqualified name, it is
+qualified it with the package name of the caller of L</wrap_sub>.
+
+First it assigns a name (that is the same as the fully-qualified name of the
+sub you're patching) to the sub using L<Sub::Name/subname>, then replaces the
+symbol table code entry with CODE.
+
+Returns: reference to the new sub
+
+=cut
+
+sub wrap_sub(*&)
+{
+  my ($glob, $new_sub) = @_;
+
   my $caller_pkg = (caller(0))[0];
 
   my $sub_name = Symbol::qualify(ref $glob ? *$glob : $glob, $caller_pkg);
@@ -175,15 +222,16 @@ sub monkeypatch(*&)
   subname $sub_name => $new_sub;
 
   {
+    no strict 'refs';
     no warnings 'redefine';
 
     *$glob = subname $sub_name => sub {
-      local $original::sub = $old_sub;
+      local $original::sub = *$glob{CODE};
       return $new_sub->(@_);
     };
   }
 
-  return $old_sub;
+  return $new_sub;
 }
 
 1;
@@ -193,12 +241,12 @@ __END__
 =head1 EXAMPLES
 
   # add a new sub
-  monkeypatch Foo::Bar::some_sub => sub {
+  add_sub Foo::Bar::some_sub => sub {
     print "hello\n";
   };
 
   # wrap an existing method
-  monkeypatch Foo::Bar::some_sub => sub {
+  wrap_sub Foo::Bar::some_sub => sub {
     my $self = @_;
 
     $_[0] = 42;
@@ -207,7 +255,7 @@ __END__
   };
 
   # wrap an existing function
-  monkeypatch Foo::Bar::some_sub => sub {
+  wrap_sub Foo::Bar::some_sub => sub {
     $_[0] = 42;
 
     original::sub(@_);
@@ -215,24 +263,24 @@ __END__
 
 
   # wrap a method by name
-  monkeypatch 'Foo::Bar::some_sub' => sub {
+  wrap_sub 'Foo::Bar::some_sub' => sub {
     ...
   };
 
   # wrap a method by name (bareword)
-  monkeypatch Foo::Bar::some_sub => sub {
+  wrap_sub Foo::Bar::some_sub => sub {
     ...
   };
 
   # wrap a method by typeglob
-  monkeypatch *Foo::Bar::some_sub => sub {
+  wrap_sub *Foo::Bar::some_sub => sub {
     ...
   };
 
 
   # wrap a method with dynamic scope
   local *Foo::Bar::some_sub = \&Foo::Bar::some_sub;
-  monkeypatch *Foo::Bar::some_sub => sub {
+  wrap_sub *Foo::Bar::some_sub => sub {
     ...
   };
 
@@ -240,7 +288,7 @@ __END__
   # wrap a method in a context-preserving way (ie. it will work with
   # context-sensitive methods)
   use Context::Preserve;
-  monkeypatch Foo::Bar::some_sub => sub {
+  wrap_sub Foo::Bar::some_sub => sub {
     my $self = shift;
     my $args = \@_;
 
