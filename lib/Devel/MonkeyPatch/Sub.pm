@@ -1,14 +1,16 @@
 package Devel::MonkeyPatch::Sub;
 
 #FIXME tests
-# * stacktrace (subnames)
-# * nesting
 # * glob, glob ref, bareword of fully qualified name, bareword of relative name, string of fully qualified name, string of relative name
-# * monkey-patching localized subs
-# * wrapping existing method
-# * wrapping existing non-method sub
 # * creating new method
 # * creating new non-method sub
+# * replacing method
+# * replacing non-method sub
+# * wrapping existing method
+# * wrapping existing non-method sub
+# * monkey-patching localized subs
+# * nesting
+# * stacktrace (subnames)
 
 use strict;
 use warnings;
@@ -382,6 +384,13 @@ L<Aspect> module. See also L</Differences from Aspect>.
 
 Currently no care is taken to preserve the prototype of the wrapped subroutine.
 This is not a problem for subroutines called as methods.
+
+=head2 caller() shows your wrapper
+
+Unlike L<Hook::LexWrap> or L<Aspect>, L<Devel::MonkeyPatch::Sub> does not (yet)
+override C<caller>. The problem is that some subroutines expect that they are
+called by the actual user code, and then they will behave less usefully if
+there's a wrapper inbetween.
 
 =head1 SEE ALSO
 
