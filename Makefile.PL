@@ -5,16 +5,60 @@ use warnings;
 
 use inc::Module::Install;
 
-name 'Devel-MonkeyPatch-Method';
-all_from 'lib/Devel/MonkeyPatch/Method.pm';
+name 'Devel-MonkeyPatch-Sub';
+all_from 'lib/Devel/MonkeyPatch/Sub.pm';
 
 requires 'Exporter' => 0;
 requires 'Symbol' => 0;
 requires 'Sub::Name' => 0;
 requires 'Sub::Prototype' => 0;
 
+#FIXME remove unnecessary test deps
+test_requires 'Test::More' => 0;
+test_requires 'Test::Builder' => 0;
+test_requires 'Test::Warn' => 0;
+test_requires 'Test::Exception' => 0;
+test_requires 'Test::Deep' => 0;
+test_requires 'File::Spec' => 0;
+test_requires 'FindBin' => 0;
+
+my %force_requires_if_author = (
+  'Test::NoTabs' => 0,
+  'Test::Pod' => 0,
+  'Test::Pod::Coverage' => 1.04,
+  'Pod::Coverage' => 0.19,
+);
+
+if ($Module::Install::AUTHOR) {
+  warn <<'EOW';
+******************************************************************************
+******************************************************************************
+***                                                                        ***
+*** AUTHOR MODE: all optional test dependencies converted to hard requires ***
+***                                                                        ***
+******************************************************************************
+******************************************************************************
+
+EOW
+
+  foreach my $module (keys %force_requires_if_author) {
+    build_requires ($module => $force_requires_if_author{$module});
+  }
+}
+
 auto_install;
 
 tests_recursive 't';
 
 WriteAll;
+
+# Re-write META.yml to _exclude_ all forced requires (we do not want to ship this)
+if ($Module::Install::AUTHOR) {
+
+  Meta->{values}{build_requires} = [ grep 
+    { not exists $force_requires_if_author{$_->[0]} }
+    ( @{Meta->{values}{build_requires}} )
+  ];
+
+  Meta->write;
+}
