@@ -1,6 +1,7 @@
 package Devel::MonkeyPatch::Sub;
 
 #FIXME propely document add_sub
+# * document exported methods
 # * mention that Aspect cannot do that ATM
 # * mention that it has the same overhead as the hand-coded version
 # * clean up documentation of add_sub and wrap_sub
