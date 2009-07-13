@@ -1,4 +1,4 @@
-package Devel::MonkeyPatch::Method;
+package Devel::MonkeyPatch::Sub;
 
 #FIXME tests
 # * stacktrace (subnames)
@@ -17,7 +17,7 @@ use 5.005;
 
 =head1 NAME
 
-Devel::MonkeyPatch::Method - Does the dirty work of monkey-patching subs for you.
+Devel::MonkeyPatch::Sub - Does the dirty work of monkey-patching subs for you.
 
 =head1 SYNOPSIS
 
@@ -87,7 +87,7 @@ even dozens of subroutines in one call, with clear and nice syntax. It is much
 more powerful and flexible when selecting what to wrap. Its model to run code
 before or after the original method and modify values is more elegant. It even
 tweaks L<CORE/caller> to make things look better. Still, it has two
-disadvantages over L<Devel::MonkeyPatch::Method>:
+disadvantages over L<Devel::MonkeyPatch::Sub>:
 
 =over
 
@@ -284,8 +284,8 @@ L<Sub::Name>, L<Aspect>, L<Context::Preserve>
 =head1 SUPPORT
 
 Please submit bugs to the CPAN RT system at
-http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Devel%3A%3AMonkeyPatch%3A%3AMethod
-or via email at bug-devel-monkeypatch-method@rt.cpan.org.
+http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Devel%3A%3AMonkeyPatch%3A%3ASub
+or via email at bug-devel-monkeypatch-sub@rt.cpan.org.
 
 =head1 AUTHOR
 
