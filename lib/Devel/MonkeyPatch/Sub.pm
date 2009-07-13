@@ -194,9 +194,7 @@ sub _subname(*)
 {
   my ($glob) = @_;
 
-  my $caller_pkg = (caller(1))[0];
-
-  my $sub_name = Symbol::qualify(ref $glob ? *$glob : $glob, $caller_pkg);
+  my $sub_name = Symbol::qualify(ref $glob ? *$glob : $glob, caller);
   $sub_name =~ s/^\*//;
 
   return $sub_name;
