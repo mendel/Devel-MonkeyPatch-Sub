@@ -229,18 +229,21 @@ L</original::method>, use L</wrap_sub> instead.
 
 =cut
 
+#FIXME refactor common parts of replace_sub and wrap_sub to _wrap_sub(*&$) (where 3rd param is $setup_wrapper)
 sub replace_sub(*&)
 {
   my ($glob, $new_sub) = @_;
 
   my $sub_name = _subname($glob);
 
+  subname $sub_name => $new_sub;
+
   {
     no strict 'refs';
     no warnings 'redefine';
 
     my $old_sub = *$glob{CODE};
-    my $wrapper_sub = subname $sub_name => $new_sub;
+    my $wrapper_sub = $new_sub;
 
     if (defined (my $prototype = prototype($old_sub))) {
       set_prototype $new_sub => $prototype;
