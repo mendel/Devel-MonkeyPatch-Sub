@@ -226,8 +226,9 @@ sub wrap_sub(*&)
     no strict 'refs';
     no warnings 'redefine';
 
+    my $old_sub = *$glob{CODE};
     *$glob = subname $sub_name => sub {
-      local $original::sub = *$glob{CODE};
+      local $original::sub = $old_sub;
       return $new_sub->(@_);
     };
   }
