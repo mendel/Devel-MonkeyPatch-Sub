@@ -26,6 +26,7 @@ my %force_requires_if_author = (
   'Pod::Coverage' => 0.19,
 );
 
+# (lifted from DBIx::Class)
 if ($Module::Install::AUTHOR) {
   warn <<'EOW';
 ******************************************************************************
@@ -37,6 +38,9 @@ if ($Module::Install::AUTHOR) {
 ******************************************************************************
 
 EOW
+
+  print "Regenerating README\n";
+  system('pod2text lib/Devel/MonkeyPatch/Sub.pm > README');
 
   foreach my $module (keys %force_requires_if_author) {
     build_requires ($module => $force_requires_if_author{$module});
@@ -50,6 +54,7 @@ tests_recursive 't';
 WriteAll;
 
 # Re-write META.yml to _exclude_ all forced requires (we do not want to ship this)
+# (lifted from DBIx::Class)
 if ($Module::Install::AUTHOR) {
 
   Meta->{values}{build_requires} = [ grep 
