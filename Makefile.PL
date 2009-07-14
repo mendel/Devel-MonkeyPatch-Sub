@@ -13,7 +13,6 @@ requires 'Symbol' => 0;
 requires 'Sub::Name' => 0;
 requires 'Sub::Prototype' => 0;
 
-#FIXME remove unnecessary test deps
 test_requires 'Test::Most' => 0;
 test_requires 'File::Spec' => 0;
 test_requires 'FindBin' => 0;
