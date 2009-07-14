@@ -3,7 +3,7 @@ use warnings;
 
 use FindBin;
 use File::Spec;
-use Test::More;
+use Test::Most;
 
 if (!$ENV{TEST_AUTHOR} && !-e File::Spec->catfile($FindBin::Bin, File::Spec->updir, 'inc', '.author')) {
   plan skip_all => 'Critic test only for developers.';

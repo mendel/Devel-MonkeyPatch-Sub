@@ -5,7 +5,7 @@ use warnings;
 
 use lib qw(t/lib);
 
-use Test::More;
+use Test::Most;
 use TestHelper;
 
 # Ensure a recent version of Test::Pod::Coverage

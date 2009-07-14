@@ -14,13 +14,10 @@ requires 'Sub::Name' => 0;
 requires 'Sub::Prototype' => 0;
 
 #FIXME remove unnecessary test deps
-test_requires 'Test::More' => 0;
-test_requires 'Test::Builder' => 0;
-test_requires 'Test::Warn' => 0;
-test_requires 'Test::Exception' => 0;
-test_requires 'Test::Deep' => 0;
+test_requires 'Test::Most' => 0;
 test_requires 'File::Spec' => 0;
 test_requires 'FindBin' => 0;
+test_requires 'Devel::StackTrace' => 0;
 
 my %force_requires_if_author = (
   'Test::NoTabs' => 0,

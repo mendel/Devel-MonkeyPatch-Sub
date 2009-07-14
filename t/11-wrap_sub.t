@@ -5,7 +5,7 @@ use warnings;
 
 use lib qw(t/lib);
 
-use Test::More tests => 8;
+use Test::Most tests => 8;
 
 use Devel::MonkeyPatch::Sub qw(wrap_sub);
 
