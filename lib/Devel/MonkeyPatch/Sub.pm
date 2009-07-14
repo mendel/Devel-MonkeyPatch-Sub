@@ -1,11 +1,6 @@
 package Devel::MonkeyPatch::Sub;
 
 #FIXME tests
-# * glob, glob ref, bareword of fully qualified name, bareword of relative name, string of fully qualified name, string of relative name
-# * creating new method
-# * creating new non-method sub
-# * replacing method
-# * replacing non-method sub
 # * wrapping existing method
 # * wrapping existing non-method sub
 # * monkey-patching localized subs
