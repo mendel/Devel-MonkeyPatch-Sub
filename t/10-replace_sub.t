@@ -9,7 +9,7 @@ use Test::More tests => 4;
 
 use Devel::MonkeyPatch::Sub qw(replace_sub);
 
-# test subs to wrap
+# test subs to replace
 {
   package Foo;
 
