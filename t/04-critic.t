@@ -16,6 +16,6 @@ if (!$ENV{TEST_AUTHOR} && !-e File::Spec->catfile($FindBin::Bin, File::Spec->upd
   }
 }
 
-my $rcfile = File::Spec->catfile( 't', '04critic.rc' );
+my $rcfile = File::Spec->catfile( 't', '04-critic.rc' );
 Test::Perl::Critic->import( -profile => $rcfile );
 all_critic_ok();
