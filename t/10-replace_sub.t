@@ -5,7 +5,7 @@ use warnings;
 
 use lib qw(t/lib);
 
-use Test::More tests => 4;
+use Test::More tests => 8;
 
 use Devel::MonkeyPatch::Sub qw(replace_sub);
 
@@ -39,7 +39,7 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 
   my $foo = Foo->new($id);
 
-  replace_sub Foo::method_to_replace => sub {
+  my $new_sub = replace_sub Foo::method_to_replace => sub {
     my $self = shift;
 
     return (caller(0))[3] . " (id: $self->{id}) (@_) replacement";
@@ -50,6 +50,10 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
     "Foo::method_to_replace (id: $id) (1 2 3) replacement",
     "Replacing existing method works"
   );
+
+  is($new_sub, \&Foo::method_to_replace,
+    "Returns the reference to the new method"
+  );
 }
 
 {
@@ -57,7 +61,7 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 
   my $foo = Foo->new($id);
 
-  replace_sub Foo::method_to_create => sub {
+  my $new_sub = replace_sub Foo::method_to_create => sub {
     my $self = shift;
 
     return (caller(0))[3] . " (id: $self->{id}) (@_) replacement";
@@ -68,25 +72,36 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
     "Foo::method_to_create (id: $id) (1 2 3) replacement",
     "Creating new method works"
   );
+
+  is($new_sub, \&Foo::method_to_create,
+    "Returns the reference to the new method"
+  );
 }
 
 {
-  replace_sub Foo::sub_to_replace => sub {
+  my $new_sub = replace_sub Foo::sub_to_replace => sub {
     return (caller(0))[3] . " (@_) replacement";
   };
 
   is(Foo::sub_to_replace(1, 2, 3), "Foo::sub_to_replace (1 2 3) replacement",
     "Replacing existing sub works"
   );
+
+  is($new_sub, \&Foo::sub_to_replace,
+    "Returns the reference to the new sub"
+  );
 }
 
 {
-  replace_sub Foo::sub_to_create => sub {
+  my $new_sub = replace_sub Foo::sub_to_create => sub {
     return (caller(0))[3] . " (@_) replacement";
   };
 
   is(Foo::sub_to_create(1, 2, 3), "Foo::sub_to_create (1 2 3) replacement",
     "Creating new sub works"
   );
-}
 
+  is($new_sub, \&Foo::sub_to_create,
+    "Returns the reference to the new sub"
+  );
+}

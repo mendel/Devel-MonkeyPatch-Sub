@@ -241,7 +241,9 @@ sub replace_sub(*&)
       set_prototype $new_sub => $prototype;
     }
 
-    return *$sub_name = $wrapper_sub;
+    *$sub_name = $wrapper_sub;
+
+    return $wrapper_sub;
   }
 }
 
@@ -296,7 +298,9 @@ sub wrap_sub(*&)
       set_prototype $wrapper_sub => $prototype;
     }
 
-    return *$sub_name = $wrapper_sub;
+    *$sub_name = $wrapper_sub;
+
+    return $wrapper_sub;
   }
 }
 
