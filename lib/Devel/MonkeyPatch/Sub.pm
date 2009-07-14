@@ -196,7 +196,7 @@ sub _subname(*)
 {
   my ($glob) = @_;
 
-  my $sub_name = Symbol::qualify(ref $glob ? *$glob : $glob, caller);
+  my $sub_name = Symbol::qualify(ref $glob ? *$glob : $glob, caller(1));
   $sub_name =~ s/^\*//;
 
   return $sub_name;
@@ -249,7 +249,7 @@ sub replace_sub(*&)
       set_prototype $new_sub => $prototype;
     }
 
-    return *$glob = $wrapper_sub;
+    return *$sub_name = $wrapper_sub;
   }
 }
 
@@ -294,7 +294,7 @@ sub wrap_sub(*&)
     no strict 'refs';
     no warnings 'redefine';
 
-    my $old_sub = *$glob{CODE};
+    my $old_sub = *$sub_name{CODE};
     my $wrapper_sub = subname $sub_name => sub {
       local $original::sub = $old_sub;
       return $new_sub->(@_);
@@ -304,7 +304,7 @@ sub wrap_sub(*&)
       set_prototype $wrapper_sub => $prototype;
     }
 
-    return *$glob = $wrapper_sub;
+    return *$sub_name = $wrapper_sub;
   }
 }
 
