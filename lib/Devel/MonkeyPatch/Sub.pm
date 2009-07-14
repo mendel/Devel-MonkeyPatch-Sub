@@ -1,7 +1,6 @@
 package Devel::MonkeyPatch::Sub;
 
 #FIXME tests
-# * monkey-patching localized subs
 # * nesting
 # * stacktrace (subnames)
 
