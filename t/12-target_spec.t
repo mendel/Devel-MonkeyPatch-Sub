@@ -16,41 +16,41 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 
     sub sub_glob
     {
-      return +(caller(0))[3];
+      return (caller(0))[3];
     }
 
     sub sub_glob_ref
     {
-      return +(caller(0))[3];
+      return (caller(0))[3];
     }
 
     sub sub_bareword_fully_qualified
     {
-      return +(caller(0))[3];
+      return (caller(0))[3];
     }
 
     sub sub_string_fully_qualified
     {
-      return +(caller(0))[3];
+      return (caller(0))[3];
     }
 
   }
 
   sub sub_bareword_relative
   {
-    return +(caller(0))[3];
+    return (caller(0))[3];
   }
 
   sub sub_string_relative
   {
-    return +(caller(0))[3];
+    return (caller(0))[3];
   }
 }
 
 
 {
   replace_sub *Foo::sub_glob => sub {
-    return +(caller(0))[3] . " replacement";
+    return (caller(0))[3] . " replacement";
   };
 
   is(Foo::sub_glob(), "Foo::sub_glob replacement",
@@ -60,7 +60,7 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 
 {
   replace_sub \*Foo::sub_glob_ref => sub {
-    return +(caller(0))[3] . " replacement";
+    return (caller(0))[3] . " replacement";
   };
 
   is(Foo::sub_glob_ref(), "Foo::sub_glob_ref replacement",
@@ -70,7 +70,7 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 
 {
   replace_sub Foo::sub_bareword_fully_qualified => sub {
-    return +(caller(0))[3] . " replacement";
+    return (caller(0))[3] . " replacement";
   };
 
   is(
@@ -82,7 +82,7 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 
 {
   replace_sub sub_bareword_relative, sub {
-    return +(caller(0))[3] . " replacement";
+    return (caller(0))[3] . " replacement";
   };
 
   is(
@@ -94,7 +94,7 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 
 {
   replace_sub 'Foo::sub_string_fully_qualified' => sub {
-    return +(caller(0))[3] . " replacement";
+    return (caller(0))[3] . " replacement";
   };
 
   is(
@@ -106,7 +106,7 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 
 {
   replace_sub 'sub_string_relative' => sub {
-    return +(caller(0))[3] . " replacement";
+    return (caller(0))[3] . " replacement";
   };
 
   is(

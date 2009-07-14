@@ -24,12 +24,12 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
   {
     my $self = shift;
 
-    return +(caller(0))[3] . " (id: $self->{id}) (@_)";
+    return (caller(0))[3] . " (id: $self->{id}) (@_)";
   }
 
   sub sub_to_replace
   {
-    return +(caller(0))[3] . " (@_)";
+    return (caller(0))[3] . " (@_)";
   }
 }
 
@@ -42,7 +42,7 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
   replace_sub Foo::method_to_replace => sub {
     my $self = shift;
 
-    return +(caller(0))[3] . " (id: $self->{id}) (@_) replacement";
+    return (caller(0))[3] . " (id: $self->{id}) (@_) replacement";
   };
 
   is(
@@ -60,7 +60,7 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
   replace_sub Foo::method_to_create => sub {
     my $self = shift;
 
-    return +(caller(0))[3] . " (id: $self->{id}) (@_) replacement";
+    return (caller(0))[3] . " (id: $self->{id}) (@_) replacement";
   };
 
   is(
@@ -72,7 +72,7 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 
 {
   replace_sub Foo::sub_to_replace => sub {
-    return +(caller(0))[3] . " (@_) replacement";
+    return (caller(0))[3] . " (@_) replacement";
   };
 
   is(Foo::sub_to_replace(1, 2, 3), "Foo::sub_to_replace (1 2 3) replacement",
@@ -82,7 +82,7 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 
 {
   replace_sub Foo::sub_to_create => sub {
-    return +(caller(0))[3] . " (@_) replacement";
+    return (caller(0))[3] . " (@_) replacement";
   };
 
   is(Foo::sub_to_create(1, 2, 3), "Foo::sub_to_create (1 2 3) replacement",

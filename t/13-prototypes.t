@@ -15,14 +15,14 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 
   sub sub_to_replace($&*)
   {
-    return +(caller(0))[3] . " (@_)";
+    return (caller(0))[3] . " (@_)";
   }
 }
 
 
 {
   replace_sub *Foo::sub_to_replace => sub {
-    return +(caller(0))[3] . " (@_) replacement";
+    return (caller(0))[3] . " (@_) replacement";
   };
 
   is(prototype(\&Foo::sub_to_replace), '$&*',
