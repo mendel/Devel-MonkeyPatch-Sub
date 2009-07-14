@@ -292,7 +292,7 @@ sub wrap_sub(*&)
       return $new_sub->(@_);
     };
 
-    if (defined (my $prototype = prototype($old_sub))) {
+    if (defined $old_sub && defined (my $prototype = prototype($old_sub))) {
       set_prototype $wrapper_sub => $prototype;
     }
 
