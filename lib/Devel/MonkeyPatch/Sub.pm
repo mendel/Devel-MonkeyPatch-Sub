@@ -113,7 +113,15 @@ L<Devel::MonkeyPatch::Sub> is also more lightweight than L<Aspect>.
 Using L<Hook::LexWrap> (which L<Aspect> is based on) shares the above
 disadvantages with L<Aspect>.
 
-=head1 EXPORTS
+=head1 VERSION
+
+Version 0.01
+
+=cut
+
+our $VERSION = 0.01;
+
+=head1 EXPORT
 
 No methods are exported by default. You can import L<replace_sub> and
 L</wrap_sub> if you want to.
@@ -122,11 +130,7 @@ L</original::method> and L<original::sub> are unconditionally created in the
 L<original> package (not an original idea to use that namespace for anything
 sensible, so I hope it won't clash with your code).
 
-=head1 METHODS
-
 =cut
-
-our $VERSION = 0.01;
 
 use base qw(Exporter);
 our @EXPORT_OK = qw(replace_sub wrap_sub);
@@ -134,6 +138,10 @@ our @EXPORT_OK = qw(replace_sub wrap_sub);
 use Sub::Prototype;
 use Sub::Name;
 use Symbol;
+
+=head1 METHODS
+
+=cut
 
 {
   package original;
