@@ -1,7 +1,6 @@
 package Devel::MonkeyPatch::Sub;
 
 #FIXME tests
-# * nesting
 # * stacktrace (subnames)
 
 use strict;
