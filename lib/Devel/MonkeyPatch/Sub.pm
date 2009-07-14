@@ -245,7 +245,7 @@ sub replace_sub(*&)
     my $old_sub = *$glob{CODE};
     my $wrapper_sub = $new_sub;
 
-    if (defined (my $prototype = prototype($old_sub))) {
+    if (defined $old_sub && defined (my $prototype = prototype($old_sub))) {
       set_prototype $new_sub => $prototype;
     }
 
