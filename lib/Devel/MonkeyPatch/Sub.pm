@@ -1,8 +1,6 @@
 package Devel::MonkeyPatch::Sub;
 
 #FIXME tests
-# * wrapping existing method
-# * wrapping existing non-method sub
 # * monkey-patching localized subs
 # * nesting
 # * stacktrace (subnames)
