@@ -6,7 +6,6 @@ package Devel::MonkeyPatch::Sub;
 # * monkey-patching localized subs
 # * nesting
 # * stacktrace (subnames)
-# * prototypes
 
 use strict;
 use warnings;
