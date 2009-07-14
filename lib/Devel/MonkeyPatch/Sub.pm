@@ -1,8 +1,5 @@
 package Devel::MonkeyPatch::Sub;
 
-#FIXME tests
-# * stacktrace (subnames)
-
 use strict;
 use warnings;
 
