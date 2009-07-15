@@ -7,7 +7,7 @@ use lib qw(t/lib);
 
 use Test::Most tests => 6;
 
-use Devel::MonkeyPatch::Sub qw(replace_sub);
+use Devel::MonkeyPatch::Sub qw(wrap_sub);
 
 # test subs to replace
 {
@@ -49,8 +49,8 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 
 
 {
-  replace_sub *Foo::sub_glob => sub {
-    return (caller(0))[3] . " replacement";
+  wrap_sub *Foo::sub_glob => sub {
+    return original::sub(@_) . " replacement";
   };
 
   is(Foo::sub_glob(), "Foo::sub_glob replacement",
@@ -59,8 +59,8 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 }
 
 {
-  replace_sub \*Foo::sub_glob_ref => sub {
-    return (caller(0))[3] . " replacement";
+  wrap_sub \*Foo::sub_glob_ref => sub {
+    return original::sub(@_) . " replacement";
   };
 
   is(Foo::sub_glob_ref(), "Foo::sub_glob_ref replacement",
@@ -69,8 +69,8 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 }
 
 {
-  replace_sub Foo::sub_bareword_fully_qualified => sub {
-    return (caller(0))[3] . " replacement";
+  wrap_sub Foo::sub_bareword_fully_qualified => sub {
+    return original::sub(@_) . " replacement";
   };
 
   is(
@@ -81,8 +81,8 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 }
 
 {
-  replace_sub sub_bareword_relative, sub {
-    return (caller(0))[3] . " replacement";
+  wrap_sub sub_bareword_relative, sub {
+    return original::sub(@_) . " replacement";
   };
 
   is(
@@ -93,8 +93,8 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 }
 
 {
-  replace_sub 'Foo::sub_string_fully_qualified' => sub {
-    return (caller(0))[3] . " replacement";
+  wrap_sub 'Foo::sub_string_fully_qualified' => sub {
+    return original::sub(@_) . " replacement";
   };
 
   is(
@@ -105,8 +105,8 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
 }
 
 {
-  replace_sub 'sub_string_relative' => sub {
-    return (caller(0))[3] . " replacement";
+  wrap_sub 'sub_string_relative' => sub {
+    return original::sub(@_) . " replacement";
   };
 
   is(
