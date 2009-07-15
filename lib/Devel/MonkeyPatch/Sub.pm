@@ -198,27 +198,33 @@ sub _wrap_or_replace_sub($$$)
 
   subname $sub_name => $new_sub;
 
+  my $old_sub = do {
+    no strict 'refs';
+    no warnings 'redefine';
+
+    *$sub_name{CODE};
+  };
+
+  my $wrapper_sub =
+    $wrap
+      ? subname $sub_name => sub {
+          local $original::sub = $old_sub;
+          return $new_sub->(@_);
+        }
+      : $new_sub;
+
+  if (defined $old_sub && defined (my $prototype = prototype($old_sub))) {
+    set_prototype $wrapper_sub => $prototype;
+  }
+
   {
     no strict 'refs';
     no warnings 'redefine';
 
-    my $old_sub = *$sub_name{CODE};
-    my $wrapper_sub =
-      $wrap
-        ? subname $sub_name => sub {
-            local $original::sub = $old_sub;
-            return $new_sub->(@_);
-          }
-        : $new_sub;
-
-    if (defined $old_sub && defined (my $prototype = prototype($old_sub))) {
-      set_prototype $wrapper_sub => $prototype;
-    }
-
     *$sub_name = $wrapper_sub;
-
-    return $wrapper_sub;
   }
+
+  return $wrapper_sub;
 }
 
 
