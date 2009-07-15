@@ -179,22 +179,46 @@ The same as L</original::method>.
   }
 }
 
+
 #
-# _subname(GLOB)
+# _wrap_or_replace_sub($glob, $new_sub, $wrap)
 #
-# Returns the fully-qualified name of the symbol referenced by GLOB.
+# The actual implementation of L</replace_sub> and L</wrap_sub>.
 #
-# If it is an unqualified name, it is qualified it with the package name of the
-# second caller of L</_subname>.
+# If C<$wrap> is true, does L</wrap_sub>, otherwise does L</replace_sub>.
 #
-sub _subname(*)
+# See L</replace_sub> and L</wrap_sub> for documentation.
+#
+sub _wrap_or_replace_sub($$$)
 {
-  my ($glob) = @_;
+  my ($glob, $new_sub, $wrap) = @_;
 
   my $sub_name = Symbol::qualify(ref $glob ? *$glob : $glob, caller(1));
   $sub_name =~ s/^\*//;
 
-  return $sub_name;
+  subname $sub_name => $new_sub;
+
+  {
+    no strict 'refs';
+    no warnings 'redefine';
+
+    my $old_sub = *$sub_name{CODE};
+    my $wrapper_sub =
+      $wrap
+        ? subname $sub_name => sub {
+            local $original::sub = $old_sub;
+            return $new_sub->(@_);
+          }
+        : $new_sub;
+
+    if (defined $old_sub && defined (my $prototype = prototype($old_sub))) {
+      set_prototype $wrapper_sub => $prototype;
+    }
+
+    *$sub_name = $wrapper_sub;
+
+    return $wrapper_sub;
+  }
 }
 
 
@@ -229,25 +253,7 @@ sub replace_sub(*&)
 {
   my ($glob, $new_sub) = @_;
 
-  my $sub_name = _subname($glob);
-
-  subname $sub_name => $new_sub;
-
-  {
-    no strict 'refs';
-    no warnings 'redefine';
-
-    my $old_sub = *$glob{CODE};
-    my $wrapper_sub = $new_sub;
-
-    if (defined $old_sub && defined (my $prototype = prototype($old_sub))) {
-      set_prototype $new_sub => $prototype;
-    }
-
-    *$sub_name = $wrapper_sub;
-
-    return $wrapper_sub;
-  }
+  return _wrap_or_replace_sub($glob, $new_sub, 0);
 }
 
 
@@ -283,28 +289,7 @@ sub wrap_sub(*&)
 {
   my ($glob, $new_sub) = @_;
 
-  my $sub_name = _subname($glob);
-
-  subname $sub_name => $new_sub;
-
-  {
-    no strict 'refs';
-    no warnings 'redefine';
-
-    my $old_sub = *$sub_name{CODE};
-    my $wrapper_sub = subname $sub_name => sub {
-      local $original::sub = $old_sub;
-      return $new_sub->(@_);
-    };
-
-    if (defined $old_sub && defined (my $prototype = prototype($old_sub))) {
-      set_prototype $wrapper_sub => $prototype;
-    }
-
-    *$sub_name = $wrapper_sub;
-
-    return $wrapper_sub;
-  }
+  return _wrap_or_replace_sub($glob, $new_sub, 1);
 }
 
 1;
