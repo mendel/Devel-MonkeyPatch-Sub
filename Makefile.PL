@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use inc::Module::Install;
+use inc::Module::Install 0.91;
 
 name 'Devel-MonkeyPatch-Sub';
 all_from 'lib/Devel/MonkeyPatch/Sub.pm';
