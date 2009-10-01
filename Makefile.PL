@@ -8,10 +8,10 @@ use inc::Module::Install 0.91;
 name 'Devel-MonkeyPatch-Sub';
 all_from 'lib/Devel/MonkeyPatch/Sub.pm';
 
-requires 'Exporter' => 0;
-requires 'Symbol' => 0;
-requires 'Sub::Name' => 0;
-requires 'Sub::Prototype' => 0;
+requires 'Exporter' => '5.62';
+requires 'Symbol' => '1.06';
+requires 'Sub::Name' => '0.04';
+requires 'Sub::Prototype' => '0.02';
 
 test_requires 'Test::Most' => '0.21';
 test_requires 'Test::More' => '0.92';
@@ -19,16 +19,16 @@ test_requires 'Test::Differences' => '0.4801';
 test_requires 'Test::Deep' => '0.103';
 test_requires 'Test::Warn' => '0.21';
 test_requires 'Test::Exception' => '0.27';
-test_requires 'File::Spec' => 0;
-test_requires 'FindBin' => 0;
-test_requires 'Path::Class' => 0;
-test_requires 'Devel::StackTrace' => 0;
+test_requires 'File::Spec' => '3.3';
+test_requires 'FindBin' => '1.49';
+test_requires 'Path::Class' => '0.16';
+test_requires 'Devel::StackTrace' => '1.21';
 
 my %force_requires_if_author = (
-  'Test::NoTabs' => 0,
-  'Test::Pod' => 0,
-  'Test::Pod::Coverage' => 1.04,
-  'Pod::Coverage' => 0.19,
+  'Test::NoTabs' => '0.9',
+  'Test::Pod' => '1.26',
+  'Test::Pod::Coverage' => '1.04',
+  'Pod::Coverage' => '0.19',
 );
 
 # (lifted from DBIx::Class)
