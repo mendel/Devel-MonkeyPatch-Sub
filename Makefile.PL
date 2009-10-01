@@ -7,6 +7,7 @@ use inc::Module::Install 0.91;
 
 name 'Devel-MonkeyPatch-Sub';
 all_from 'lib/Devel/MonkeyPatch/Sub.pm';
+readme_from 'lib/Devel/MonkeyPatch/Sub.pm' => 'clean';
 
 requires 'Exporter' => '5.62';
 requires 'Symbol' => '1.06';
@@ -23,48 +24,17 @@ test_requires 'FindBin' => '1.49';
 test_requires 'Path::Class' => '0.16';
 test_requires 'Devel::StackTrace' => '1.21';
 
-my %force_requires_if_author = (
-  'Test::NoTabs' => '0.9',
-  'Test::Pod' => '1.26',
-  'Test::Pod::Coverage' => '1.04',
-  'Pod::Coverage' => '0.19',
-);
+author_requires 'Test::NoTabs' => '0.9',
+author_requires 'Test::Pod' => '1.26',
+author_requires 'Test::Pod::Coverage' => '1.04',
+author_requires 'Pod::Coverage' => '0.19',
 
-# (lifted from DBIx::Class)
-if ($Module::Install::AUTHOR) {
-  warn <<'EOW';
-******************************************************************************
-******************************************************************************
-***                                                                        ***
-*** AUTHOR MODE: all optional test dependencies converted to hard requires ***
-***                                                                        ***
-******************************************************************************
-******************************************************************************
+configure_requires 'Module::Install::ExtraTests' => '0.006';
+configure_requires 'Module::Install::ReadmeFromPod' => '0.06';
+configure_requires 'Module::Install::AuthorRequires' => '0.02';
 
-EOW
-
-  print "Regenerating README\n";
-  system('pod2text lib/Devel/MonkeyPatch/Sub.pm > README');
-
-  foreach my $module (keys %force_requires_if_author) {
-    build_requires ($module => $force_requires_if_author{$module});
-  }
-}
+extra_tests;
 
 auto_install;
 
-tests_recursive 't';
-
 WriteAll;
-
-# Re-write META.yml to _exclude_ all forced requires (we do not want to ship this)
-# (lifted from DBIx::Class)
-if ($Module::Install::AUTHOR) {
-
-  Meta->{values}{build_requires} = [ grep 
-    { not exists $force_requires_if_author{$_->[0]} }
-    ( @{Meta->{values}{build_requires}} )
-  ];
-
-  Meta->write;
-}
