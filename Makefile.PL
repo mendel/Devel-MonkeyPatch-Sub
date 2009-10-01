@@ -13,7 +13,12 @@ requires 'Symbol' => 0;
 requires 'Sub::Name' => 0;
 requires 'Sub::Prototype' => 0;
 
-test_requires 'Test::Most' => 0;
+test_requires 'Test::Most' => '0.21';
+test_requires 'Test::More' => '0.92';
+test_requires 'Test::Differences' => '0.4801';
+test_requires 'Test::Deep' => '0.103';
+test_requires 'Test::Warn' => '0.21';
+test_requires 'Test::Exception' => '0.27';
 test_requires 'File::Spec' => 0;
 test_requires 'FindBin' => 0;
 test_requires 'Path::Class' => 0;
