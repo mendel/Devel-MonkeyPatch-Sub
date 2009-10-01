@@ -8,6 +8,7 @@ use inc::Module::Install 0.91;
 name 'Devel-MonkeyPatch-Sub';
 all_from 'lib/Devel/MonkeyPatch/Sub.pm';
 readme_from 'lib/Devel/MonkeyPatch/Sub.pm' => 'clean';
+auto_set_repository;
 
 requires 'Exporter' => '5.62';
 requires 'Symbol' => '1.06';
@@ -32,6 +33,7 @@ author_requires 'Pod::Coverage' => '0.19',
 configure_requires 'Module::Install::ExtraTests' => '0.006';
 configure_requires 'Module::Install::ReadmeFromPod' => '0.06';
 configure_requires 'Module::Install::AuthorRequires' => '0.02';
+configure_requires 'Module::Install::Repository' => '0.06';
 
 extra_tests;
 
