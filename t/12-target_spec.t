@@ -5,7 +5,7 @@ use warnings;
 
 use lib qw(t/lib);
 
-use Test::Most tests => 6;
+use Test::Most;
 
 use Devel::MonkeyPatch::Sub qw(wrap_sub);
 
@@ -115,3 +115,5 @@ use Devel::MonkeyPatch::Sub qw(wrap_sub);
     "Using relative string to specify target works"
   );
 }
+
+done_testing;

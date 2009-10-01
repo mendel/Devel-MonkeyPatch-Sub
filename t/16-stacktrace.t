@@ -5,7 +5,7 @@ use warnings;
 
 use lib qw(t/lib);
 
-use Test::Most tests => 2;
+use Test::Most;
 use Devel::StackTrace;
 
 use Devel::MonkeyPatch::Sub qw(replace_sub wrap_sub);
@@ -69,3 +69,5 @@ my %lineno;
     "Stacktrace from wrapped sub is as expected"
   );
 }
+
+done_testing;

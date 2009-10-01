@@ -5,7 +5,7 @@ use warnings;
 
 use lib qw(t/lib);
 
-use Test::Most tests => 12;
+use Test::Most;
 
 use Devel::MonkeyPatch::Sub qw(replace_sub wrap_sub);
 
@@ -130,3 +130,5 @@ use Devel::MonkeyPatch::Sub qw(replace_sub wrap_sub);
     "Replaced localized+aliased sub is restored when the scope is left"
   );
 }
+
+done_testing;

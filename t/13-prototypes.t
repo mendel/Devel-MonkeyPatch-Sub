@@ -5,7 +5,7 @@ use warnings;
 
 use lib qw(t/lib);
 
-use Test::Most tests => 2;
+use Test::Most;
 
 use Devel::MonkeyPatch::Sub qw(replace_sub);
 
@@ -35,3 +35,5 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
     "The replacement function seems to work according to old the prototype"
   );
 }
+
+done_testing;

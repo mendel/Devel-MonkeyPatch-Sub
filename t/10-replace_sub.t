@@ -5,7 +5,7 @@ use warnings;
 
 use lib qw(t/lib);
 
-use Test::Most tests => 8;
+use Test::Most;
 
 use Devel::MonkeyPatch::Sub qw(replace_sub);
 
@@ -105,3 +105,5 @@ use Devel::MonkeyPatch::Sub qw(replace_sub);
     "Returns the reference to the new sub"
   );
 }
+
+done_testing;
