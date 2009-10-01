@@ -29,11 +29,10 @@ author_requires 'Test::NoTabs' => '0.9',
 author_requires 'Test::Pod' => '1.26',
 author_requires 'Test::Pod::Coverage' => '1.04',
 author_requires 'Pod::Coverage' => '0.19',
-
-configure_requires 'Module::Install::ExtraTests' => '0.006';
-configure_requires 'Module::Install::ReadmeFromPod' => '0.06';
-configure_requires 'Module::Install::AuthorRequires' => '0.02';
-configure_requires 'Module::Install::Repository' => '0.06';
+author_requires 'Module::Install::ExtraTests' => '0.006';
+author_requires 'Module::Install::ReadmeFromPod' => '0.06';
+author_requires 'Module::Install::AuthorRequires' => '0.02';
+author_requires 'Module::Install::Repository' => '0.06';
 
 extra_tests;
 
