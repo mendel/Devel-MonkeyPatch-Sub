@@ -3,9 +3,11 @@
 use strict;
 use warnings;
 
-use lib qw(t/lib);
-
 use Test::Most;
+
+use FindBin;
+use Path::Class;
+use lib dir($FindBin::Bin)->subdir('lib')->stringify;
 
 use Devel::MonkeyPatch::Sub qw(replace_sub wrap_sub);
 
