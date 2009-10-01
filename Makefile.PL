@@ -19,7 +19,6 @@ test_requires 'Test::Differences' => '0.4801';
 test_requires 'Test::Deep' => '0.103';
 test_requires 'Test::Warn' => '0.21';
 test_requires 'Test::Exception' => '0.27';
-test_requires 'File::Spec' => '3.3';
 test_requires 'FindBin' => '1.49';
 test_requires 'Path::Class' => '0.16';
 test_requires 'Devel::StackTrace' => '1.21';

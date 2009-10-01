@@ -1,11 +1,13 @@
 use strict;
 use warnings;
 
-use FindBin;
-use File::Spec;
 use Test::Most;
 
-if (!$ENV{TEST_AUTHOR} && !-e File::Spec->catfile($FindBin::Bin, File::Spec->updir, 'inc', '.author')) {
+use FindBin;
+use Path::Class;
+use lib dir($FindBin::Bin)->subdir('lib')->stringify;
+
+if (!$ENV{TEST_AUTHOR} && !-e dir($FindBin::Bin)->parent->subdir('inc', '.author')) {
   plan skip_all => 'Critic test only for developers.';
 } else {
   eval { require Test::Perl::Critic };
@@ -16,6 +18,6 @@ if (!$ENV{TEST_AUTHOR} && !-e File::Spec->catfile($FindBin::Bin, File::Spec->upd
   }
 }
 
-my $rcfile = File::Spec->catfile( 't', '04-critic.rc' );
+my $rcfile = dir($FindBin::Bin)->file('04-critic.rc')->stringify;
 Test::Perl::Critic->import( -profile => $rcfile );
 all_critic_ok();

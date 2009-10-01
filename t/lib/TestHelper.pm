@@ -23,7 +23,7 @@ our @EXPORT = qw(
 );
 
 use FindBin;
-use File::Spec;
+use Path::Class;
 
 =head2 is_author_running_test()
 
@@ -35,7 +35,7 @@ sub is_author_running_test()
 {
   return $ENV{TEST_POD}
     || $ENV{TEST_AUTHOR}
-    || -e File::Spec->catfile($FindBin::Bin, File::Spec->updir, 'inc', '.author');
+    || -e dir($FindBin::Bin)->parent->subdir('inc', '.author');
 }
 
 1;
