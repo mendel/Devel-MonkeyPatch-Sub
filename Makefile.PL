@@ -14,6 +14,7 @@ requires 'Exporter' => '5.62';
 requires 'Symbol' => '1.06';
 requires 'Sub::Name' => '0.04';
 requires 'Sub::Prototype' => '0.02';
+requires 'Class::MOP' => '0.94';
 
 test_requires 'Test::Most' => '0.21';
 test_requires 'Test::More' => '0.92';

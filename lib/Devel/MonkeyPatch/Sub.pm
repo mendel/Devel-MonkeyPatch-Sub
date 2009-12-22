@@ -1,6 +1,5 @@
 package Devel::MonkeyPatch::Sub;
 
-#FIXME remove glob mangling and use only Class::MOP::Class
 #FIXME change to pass the orig sub like 'my ($orig_sub, $self, @args) = @_' (like Class::MOP::Class or Moose does; no 'original' package)
 #TODO goal is to make all the power that is available via Class::MOP readily, easily and handily available (ie. short and expressive idioms for all the routine monkey-patching tasks)
 #TODO use Scope::Upper and implement replace_sub_lexically and wrap_sub_lexically (use Scope::Guard to restore the method)
@@ -205,6 +204,7 @@ our @EXPORT_OK = qw(replace_sub wrap_sub);
 use Sub::Prototype;
 use Sub::Name;
 use Symbol;
+use Class::MOP;
 
 =head1 METHODS
 
@@ -260,38 +260,55 @@ sub _wrap_or_replace_sub($$$)
 {
   my ($glob, $new_sub, $wrap) = @_;
 
-  my $sub_name = Symbol::qualify(ref $glob ? *$glob : $glob, caller(1));
-  $sub_name =~ s/^\*//;
+  # this way we can accept globs, globrefs, subrefs and strings (both relative
+  # and fully qualified)
+  my $fully_qualified_method_name
+    = Symbol::qualify(ref $glob ? *$glob : $glob, caller(1));
+  $fully_qualified_method_name =~ s/^\*//;
 
-  subname $sub_name => $new_sub;
+  # Class::MOP does not do this currently
+  subname $fully_qualified_method_name => $new_sub;
 
-  my $old_sub = do {
-    no strict 'refs';
-    no warnings 'redefine';
+  my ($package, $method_name)
+    = ($fully_qualified_method_name =~ /^(.*)::([^:]+)$/);
 
-    *$sub_name{CODE};
-  };
+  my $metaclass = $package->can('meta') ? $package->meta : undef;
+  # in case it was something else called 'meta'
+  $metaclass = Class::MOP::Class->initialize($package)
+    unless defined $metaclass && $metaclass->isa('Class::MOP::Class');
 
-  my $wrapper_sub =
-    $wrap
-      ? subname $sub_name => sub {
-          local $original::sub = $old_sub;
-          return $new_sub->(@_);
-        }
-      : $new_sub;
+  my $was_immutable = $metaclass->is_immutable;
+  $metaclass->make_mutable if $was_immutable;
 
-  if (defined $old_sub && defined (my $prototype = prototype($old_sub))) {
-    set_prototype $wrapper_sub => $prototype;
+  if ($metaclass->has_method($method_name)) {
+    my $old_sub = $metaclass->find_method_by_name($method_name)->body;
+
+    $metaclass->add_around_method_modifier($method_name =>
+      subname $fully_qualified_method_name => sub {
+        local $original::sub = shift;
+        return $new_sub->(@_);
+      }
+    );
+
+    # copy the prototype - Class::MOP does not do this (and it makes no sense
+    # for actual methods, so it never will; but this code should work for plain
+    # subs as well)
+    if (defined (my $prototype = prototype($old_sub))) {
+      my $wrapper_sub = $metaclass->find_method_by_name($method_name)->body;
+      set_prototype $wrapper_sub => $prototype;
+    }
+  } else {
+    $metaclass->add_method($method_name =>
+      Class::MOP::Method->wrap($new_sub,
+        package_name => $package,
+        name => $method_name
+      )
+    );
   }
 
-  {
-    no strict 'refs';
-    no warnings 'redefine';
+  $metaclass->make_immutable($metaclass->immutable_options) if $was_immutable;
 
-    *$sub_name = $wrapper_sub;
-  }
-
-  return $wrapper_sub;
+  return $metaclass->find_method_by_name($method_name)->body;
 }
 
 

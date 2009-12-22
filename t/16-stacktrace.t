@@ -42,9 +42,12 @@ my %lineno;
   my $stacktrace = Foo::sub_to_replace();
 
   cmp_deeply(
-    [ map { $_->as_string } $stacktrace->frames ],
     [
-      re(qr{^Devel::StackTrace::new\('Devel::StackTrace'\) called at \Q$0\E line $lineno{sub_to_replace_replacement}$}),
+      grep { $_ !~ /^(Class::MOP|Devel::StackTrace)\b/ }
+        map { $_->as_string } $stacktrace->frames
+    ],
+    [
+      re(qr{^Foo::sub_to_replace at .*(?i:\bDevel\b.+\bMonkeyPatch\b.+\bSub\.pm) line \d+$}),
       re(qr{^Foo::sub_to_replace at \Q$0\E line $lineno{sub_to_replace_called}$}),
     ],
     "Stacktrace from replaced sub is as expected"
@@ -61,9 +64,11 @@ my %lineno;
   my $stacktrace = Foo::sub_to_wrap();
 
   cmp_deeply(
-    [ map { $_->as_string } $stacktrace->frames ],
     [
-      re(qr{^Devel::StackTrace::new\('Devel::StackTrace'\) called at \Q$0\E line $lineno{sub_to_wrap}$}),
+      grep { $_ !~ /^(Class::MOP|Devel::StackTrace)\b/ }
+        map { $_->as_string } $stacktrace->frames
+    ],
+    [
       re(qr{^Foo::sub_to_wrap at \Q$0\E line $lineno{sub_to_wrap_replacement}$}),
       re(qr{^Foo::sub_to_wrap at .*(?i:\bDevel\b.+\bMonkeyPatch\b.+\bSub\.pm) line \d+$}),
       re(qr{^Foo::sub_to_wrap at \Q$0\E line $lineno{sub_to_wrap_called}$}),
