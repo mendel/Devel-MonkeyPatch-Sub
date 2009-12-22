@@ -1,5 +1,11 @@
 package Devel::MonkeyPatch::Sub;
 
+#FIXME remove glob mangling and use only Class::MOP::Class
+#FIXME change to pass the orig sub like 'my ($orig_sub, $self, @args) = @_' (like Class::MOP::Class or Moose does; no 'original' package)
+#TODO goal is to make all the power that is available via Class::MOP readily, easily and handily available (ie. short and expressive idioms for all the routine monkey-patching tasks)
+#TODO use Scope::Upper and implement replace_sub_lexically and wrap_sub_lexically (use Scope::Guard to restore the method)
+#TODO create an add_sub_unless_can sub that does << replace_sub somesub => sub { } unless $module->can('somesub') >>
+
 use strict;
 use warnings;
 
@@ -37,27 +43,26 @@ Monkey-patching (or guerilla-patching or duck-punching or whatever you call it)
 is the process of changing the code at runtime. The most prominent example is
 replacing or wrapping methods of a class.
 
-=head2 Hand-coded monkey-patching
+=head2 Advantages over hand-coded monkey-patching
 
 The usual idom to wrap a method 'in place':
 
   use Sub::Name;
 
   {
-    no strict 'refs';
-    no warnings 'redefine';
-
-    my $orig_method = \&Foo::Bar::some_sub;
-    *Foo::Bar::some_sub = subname 'Foo::Bar::some_sub' => sub {
-      use strict;
-      use warnings;
-
+    my $new_method = subname 'Foo::Bar::some_sub' => sub {
       my $self = shift;
 
       # do something
 
       return $self->$orig_method(@_);
     };
+
+    no strict 'refs';
+    no warnings 'redefine';
+
+    my $orig_method = \&Foo::Bar::some_sub;
+    *Foo::Bar::some_sub = $new_method;
   }
 
 Now, there are two problems with that:
@@ -80,38 +85,100 @@ code is compiled and run under C<no strict 'refs'> (and C<no warnings
 This module tries to provide a more convenient and expressive interface for
 wrapping (or simply adding/replacing) methods 'in place'.
 
-=head2 Differences from Aspect and Hook::LexWrap
-
-The L<Aspect> module gives you a full-fledged AOP API where you can easily wrap
-even dozens of subroutines in one call, with clear and nice syntax. It is much
-more powerful and flexible when selecting what to wrap. Its model to run code
-before or after the original method and modify values is more elegant. It even
-tweaks L<CORE/caller> to make things look better. Still, it has these
-disadvantages over L<Devel::MonkeyPatch::Sub>:
+=head2 Differences from Hook::LexWrap
 
 =over
 
 =item
 
-With L<Aspect> you can run any code before or after the original method, but if
+L<Hook::LexWrap>'s model to run code before or after the original method
+(instead of forcing the user to replace it) and modify values is more elegant.
+
+=item
+
+L<Hook::LexWrap> even tweaks L<perlfunc/caller> to make things look better.
+
+=item
+
+L<Hook::LexWrap> can lexically wrap subroutines, L<Devel::MonkeyPatch::Sub>
+cannot. (FIXME add wrap_sub_lexically/replace_sub_lexically subs using
+Scope::Upper)
+
+=item
+
+With L<Hook::LexWrap> you can run any code before or after the original method, but if
 the original method throws an exception, you cannot currently catch it.
 
 =item
 
-With L<Aspect> the L<Aspect/before> and L<Aspect/after> advices are in separate
-scopes than the call to the original method, so you cannot localize variables
-for the duration of the call to the original subroutine.
+With L<Hook::LexWrap> code in the L<Hook::LexWrap/pre> and
+L<Hook::LexWrap/post> wrappers is in a separate scope from the call to the
+original method, so you cannot localize variables for the duration of the call
+to the original subroutine.
 
 =item
 
-With L<Aspect> you cannot currently add a new method to a class.
+With L<Hook::LexWrap> you cannot skip calling the original subroutine.
+
+=item
+
+With L<Hook::LexWrap> you cannot currently add a new method to a class.
 
 =back
 
-L<Devel::MonkeyPatch::Sub> is also more lightweight than L<Aspect>.
+=head2 Differences from Aspect
 
-Using L<Hook::LexWrap> (which L<Aspect> is based on) shares the above
-disadvantages with L<Aspect>.
+=over
+
+=item
+
+The L<Aspect> module gives you a full-fledged AOP API where you can easily wrap
+even dozens of subroutines in one call, with clear and nice syntax. It is much
+more powerful and flexible when selecting what to wrap.
+
+=item
+
+Since L<Aspect> is based on L<Hook::LexWrap>, everything said in
+L</"Differences from Hook::LexWrap"> applies.
+
+=item
+
+L<Devel::MonkeyPatch::Sub> is more lightweight than L<Aspect>.
+
+=back
+
+=head2 Differences from Class::MOP
+
+=over
+
+=item
+
+L<Class::MOP> is the standard for introspecting/manipulating classes.
+
+In fact L<Devel::MonkeyPatch::Sub> uses
+L<Class::MOP::Class/add_around_method_modifier> internally for L</wrap_sub> and
+L</replace_sub> if L<Class::MOP> is loaded and the class to be manipulated has
+its L<Class::MOP::Class> metaclass instance initialized.
+
+=item
+
+L<Class::MOP> can run code before or after the original method (instead of
+forcing the user to replace it) which is more elegant.
+
+=item
+
+With L<Class::MOP> you have to check yourself if the method already exists and
+choose between L<Class::MOP::Class/add_around_method_modifier> and
+L<Class::MOP::Class/add_method>. L<Devel::MonkeyPatch::Sub> does it
+transparently for you.
+
+=item
+
+The way you call the original subroutine in a L<Devel::MonkeyPatch::Sub>
+wrapper is nicer (though a bit slower) than the way you do it from an
+L<Class::MOP::Class/add_around_method_modifier> wrapper.
+
+=back
 
 =head1 VERSION
 
@@ -123,7 +190,7 @@ our $VERSION = 0.01;
 
 =head1 EXPORT
 
-No methods are exported by default. You can import L<replace_sub> and
+No methods are exported by default. You can import L</replace_sub> and
 L</wrap_sub> if you want to.
 
 L</original::method> and L<original::sub> are unconditionally created in the
@@ -254,7 +321,6 @@ L</original::method>, use L</wrap_sub> instead.
 
 =cut
 
-#FIXME refactor common parts of replace_sub and wrap_sub to _wrap_sub(*&$) (where 3rd param is $setup_wrapper)
 sub replace_sub(*&)
 {
   my ($glob, $new_sub) = @_;
@@ -390,6 +456,11 @@ If you want to do some real Aspect Oriented Programming (AOP) instead of just
 wrapping/replacing/adding some random method, you're better off with using the
 L<Aspect> module. See also L</Differences from Aspect>.
 
+=head2 Use Class::MOP for serious work
+
+L<Class::MOP> gives you a more elaborate interface to tweaking classes. For
+serious work I'd recommend using that instead.
+
 =head2 caller() shows your wrapper
 
 Unlike L<Hook::LexWrap> or L<Aspect>, L<Devel::MonkeyPatch::Sub> does not (yet)
@@ -406,7 +477,7 @@ L<Sub::Prototype/set_prototype> call.
 
 =head1 SEE ALSO
 
-L<Sub::Name>, L<Aspect>, L<Hook::LexWrap>, L<Context::Preserve>
+L<Sub::Name>, L<Aspect>, L<Hook::LexWrap>, L<Sub::Install>, L<Sub::Installer>, L<Context::Preserve>
 
 =head1 SUPPORT
 
